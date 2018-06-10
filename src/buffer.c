@@ -18,7 +18,7 @@ buffer buf_init() {
 	};
 }
 
-void buf_resize(buffer *b, size_t newsize) {
+static void buf_resize(buffer *b, size_t newsize) {
 	char *newbuf = realloc(b->buf, newsize);
 	if (!newbuf) {
 		fprintf(stderr, "Out of memory\n");

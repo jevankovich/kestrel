@@ -100,7 +100,66 @@ int next_tok(lex_state *l) {
 	}
 }
 
+void expr(lex_state *l) {
+	if (next_tok(l) != TK_NUMERAL) {
+		fprintf(stderr, "Expected numeric literal");
+		exit(1);
+	}
+	printf("%s", l->tok.str);
+
+	if (next_tok(l) != ';') {
+		fprintf(stderr, "Expected ;");
+		exit(1);
+	}
+	printf(";\n");
+}
+
+void statement(lex_state *l) {
+	if (next_tok(l) != TK_RET) {
+		fprintf(stderr, "Expected return\n");
+		exit(1);
+	}
+	printf("    return ");
+
+	expr(l);
+}
+
+// {...}
+void block(lex_state *l) {
+	if (next_tok(l) != '{') {
+		fprintf(stderr, "Expected right bracket\n");
+		exit(1);
+	}
+	printf("{\n");
+
+	statement(l);
+
+	if (next_tok(l) != '}') {
+		fprintf(stderr, "Expected right bracket\n");
+		exit(1);
+	}
+	printf("}");
+}
+
+// int ident() {...}
 void decl(lex_state *l) {
+	assert(l->tok.type == TK_INT);
+	printf("int ");
+	if (next_tok(l) != TK_IDENT) {
+		fprintf(stderr, "Type specification must be followed by an identifier\n");
+		exit(1);
+	}
+
+	char *id = l->tok.str;
+	printf("%s", id);
+
+	if (!(next_tok(l) == '(' && next_tok(l) == ')')) {
+		fprintf(stderr, "Malformed declaration\n");
+		exit(1);
+	}
+	printf("()");
+
+	block(l);
 }
 
 void parse(lex_state *l) {
@@ -108,6 +167,9 @@ void parse(lex_state *l) {
 		case TK_INT:
 			decl(l);
 			break;
+		default:
+			fprintf(stderr, "Unexpected token in source");
+			exit(1);
 	}
 }
 
@@ -116,6 +178,7 @@ int main(int argc, char **argv) {
 	if (argc > 1) {
 		in = fopen(argv[1], "r");
 		if (!in) {
+			perror(NULL);
 			return 1;
 		}
 	} else {
@@ -123,17 +186,5 @@ int main(int argc, char **argv) {
 	}
 
 	lex_state l = lex_init(in);
-	for (;;) {
-		if (next_tok(&l) == TK_EOS) {
-			break;
-		}
-
-		if (l.tok.type < FIRST_RESERVED) { // one character
-			printf("%d,%d %c\n", l.tok.line, l.tok.col, l.tok.type);
-		} else if (l.tok.type < TK_IDENT) { // reserved multi-character
-			printf("%d,%d %s\n", l.tok.line, l.tok.col, tokstr(l.tok.type));
-		} else { // user multi-character
-			printf("%d,%d %s %s\n", l.tok.line, l.tok.col, tokstr(l.tok.type), l.tok.str);
-		}
-	}
+	parse(&l);
 }
