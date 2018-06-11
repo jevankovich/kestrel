@@ -34,3 +34,7 @@ test/%: src/test/%.c src/test/test.h
 
 .PHONY: test
 test: $(TESTS)
+
+.PHONY: bench
+bench: CPPFLAGS += -DBENCH
+bench: $(TESTS)
