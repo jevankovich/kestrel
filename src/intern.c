@@ -14,20 +14,20 @@ struct intern {
 	char **data;
 };
 
-void intern_init(intern i, size_t cap) {
+int intern_init(intern i, size_t cap) {
 	if (cap < DENOM) { cap = DENOM; }
 	i->data = calloc(sizeof(i->data[0]), cap);
 	if (!(i->data)) {
-		fprintf(stderr, "Out of memory\n");
-		exit(1);
+		return -1;
 	}
 
 	i->filled = 0;
 	i->cap = cap;
+	return 0;
 }
 
 void intern_free(intern i) {
-	for (size_t idx = 0; idx < i->cap; i++) {
+	for (size_t idx = 0; idx < i->cap; idx++) {
 		free(i->data[idx]);
 	}
 
@@ -75,7 +75,7 @@ static void grow(intern i) {
 	}
 
 	for (size_t idx = 0; idx < i->cap; idx++) {
-		if (i->data[idx]) {
+		if (old[idx]) {
 			add_unchecked(i, old[idx]);
 		}
 	}

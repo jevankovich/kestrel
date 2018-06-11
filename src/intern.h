@@ -5,7 +5,7 @@
 
 typedef struct intern *intern;
 
-void intern_init(intern, size_t);
+int intern_init(intern, size_t);
 void intern_free(intern);
 
 const char *intern_add(intern, const char *);

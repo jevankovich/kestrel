@@ -1,14 +1,19 @@
 CFLAGS := -std=c99 -pedantic -Wall -O2
 
 OBJDIR := obj
-OBJS := kestrel.o buffer.o token.o
+OBJS := kestrel.o buffer.o token.o intern.o
 OBJS := $(addprefix $(OBJDIR)/, $(OBJS))
 
+TESTDIR := test
+TESTS := intern_test
+TESTS := $(addprefix $(TESTDIR)/, $(TESTS))
+
 kcc: $(OBJS)
-	$(CC) -o $@ obj/*.o $(LDFLAGS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
 obj/%.o: src/%.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
+
 
 obj/kestrel.o: src/buffer.h src/token.h
 obj/buffer.o: src/buffer.h
@@ -20,4 +25,12 @@ debug: kcc
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS) kcc
+	rm -f $(OBJS) $(TESTS) kcc
+
+test/intern_test: src/intern.c
+test/%: src/test/%.c src/test/test.h
+	$(CC) $(CFLAGS) -Wno-unused-value $(CPPFLAGS) -o $@ $<
+	./$@
+
+.PHONY: test
+test: $(TESTS)
