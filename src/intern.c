@@ -6,15 +6,12 @@
 #include <string.h>
 
 #define DENOM 4
-#define FILL_RATIO 3/DENOM
+#define NUMER 3
+#define FILL_RATIO NUMER/DENOM
 
-struct intern {
-	size_t filled;
-	size_t cap;
-	char **data;
-};
 
-int intern_init(intern i, size_t cap) {
+int intern_init(intern *i, size_t cap) {
+	cap = cap * DENOM / NUMER; // i.e. to store 3, we need 4
 	if (cap < DENOM) { cap = DENOM; }
 	i->data = calloc(sizeof(i->data[0]), cap);
 	if (!(i->data)) {
@@ -27,27 +24,27 @@ int intern_init(intern i, size_t cap) {
 }
 
 void intern_free(intern i) {
-	for (size_t idx = 0; idx < i->cap; idx++) {
-		free(i->data[idx]);
+	for (size_t idx = 0; idx < i.cap; idx++) {
+		free(i.data[idx]);
 	}
 
-	free(i->data);
+	free(i.data);
 }
 
 static size_t find(intern i, uint64_t h, const char *str) {
-	h %= i->cap;
+	h %= i.cap;
 	uint64_t idx = h;
 	for (;;) {
-		if (i->data[idx] == NULL) {
+		if (i.data[idx] == NULL) {
 			return idx;
 		}
 
-		if (strcmp(i->data[idx], str) == 0) {
+		if (strcmp(i.data[idx], str) == 0) {
 			return idx;
 		}
 
 		idx++;
-		idx %= i->cap;
+		idx %= i.cap;
 	}
 }
 
@@ -62,11 +59,11 @@ static uint64_t hash(const char *str) {
 	return h;
 }
 
-static void add_unchecked(intern i, char *str) {
-	i->data[find(i, hash(str), str)] = str;
+static void add_unchecked(intern *i, char *str) {
+	i->data[find(*i, hash(str), str)] = str;
 }
 
-static void grow(intern i) {
+static void grow(intern *i) {
 	char **old = i->data;
 	i->data = calloc(sizeof(i->data[0]), i->cap * 2);
 	if (!(i->data)) {
@@ -84,15 +81,15 @@ static void grow(intern i) {
 	i->cap *= 2;
 }
 
-const char *intern_add(intern i, const char *str) {
+const char *intern_add(intern *i, const char *str) {
 	size_t len = strlen(str);
 
 	return intern_addn(i, str, len);
 }
 
-const char *intern_addn(intern i, const char *buf, size_t len) {
+const char *intern_addn(intern *i, const char *buf, size_t len) {
 	uint64_t h = hash(buf);
-	size_t ret = find(i, h, buf);
+	size_t ret = find(*i, h, buf);
 	if (i->data[ret]) {
 		return i->data[ret];
 	} else if (i->filled >= i->cap * FILL_RATIO) {
@@ -103,8 +100,19 @@ const char *intern_addn(intern i, const char *buf, size_t len) {
 	memcpy(newbuf, buf, len);
 	newbuf[len] = 0;
 
-	i->data[find(i, h, buf)] = newbuf;
+	i->data[find(*i, h, buf)] = newbuf;
 
 	i->filled++;
 	return newbuf;
+}
+
+const char *intern_find(intern i, const char *str) {
+	size_t len = strlen(str);
+
+	return intern_findn(i, str, len);
+}
+
+const char *intern_findn(intern i, const char *buf, size_t len) {
+	uint64_t h = hash(buf);
+	return i.data[find(i, h, buf)];
 }
