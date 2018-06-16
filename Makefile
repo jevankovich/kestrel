@@ -30,7 +30,7 @@ clean:
 test/intern_test: src/intern.c
 test/%: src/test/%.c src/test/test.h
 	$(CC) $(CFLAGS) -Wno-unused-value $(CPPFLAGS) -o $@ $<
-	./$@
+	$(TOOL) ./$@
 
 .PHONY: test
 test: $(TESTS)
@@ -38,3 +38,7 @@ test: $(TESTS)
 .PHONY: bench
 bench: CPPFLAGS += -DBENCH
 bench: $(TESTS)
+
+.PHONY: debugbench
+debugbench: CFLAGS += -g
+debugbench: bench
