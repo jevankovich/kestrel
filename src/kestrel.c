@@ -6,6 +6,8 @@
 
 #include "buffer.h"
 #include "token.h"
+#include "intern.h"
+
 
 typedef struct lex_state {
 	FILE *in; // input stream
