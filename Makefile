@@ -1,7 +1,7 @@
 CFLAGS := -std=c99 -pedantic -Wall -O2
 
 OBJDIR := obj
-OBJS := kestrel.o buffer.o token.o intern.o
+OBJS := kestrel.o buffer.o token.o
 OBJS := $(addprefix $(OBJDIR)/, $(OBJS))
 
 TESTDIR := test
@@ -27,7 +27,6 @@ debug: kcc
 clean:
 	rm -f $(OBJS) $(TESTS) kcc
 
-test/intern_test: src/intern.c
 test/%: src/test/%.c src/test/test.h
 	$(CC) $(CFLAGS) -Wno-unused-value $(CPPFLAGS) -o $@ $<
 	$(TOOL) ./$@
