@@ -6,18 +6,20 @@
 
 #include "buffer.h"
 #include "token.h"
+#include "intern.h"
+
 
 typedef struct lex_state {
 	FILE *in; // input stream
 	int line, col; // position in stream
 	buffer text; // buffer used to build token string
 	int curr; // current character from input
-	token tok;
+	token tok; // the complete last token from the input string
 } lex_state;
 
 lex_state lex_init(FILE *in) {
 	buffer b = buf_init();
-
+	`
 	return (lex_state){
 		.in = in,
 		.line = 1,
@@ -138,7 +140,7 @@ void block(lex_state *l) {
 		fprintf(stderr, "Expected right bracket\n");
 		exit(1);
 	}
-	printf("}");
+	printf("}\n");
 }
 
 // int ident() {...}
