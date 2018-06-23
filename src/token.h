@@ -25,7 +25,7 @@ typedef struct token {
 	char *str;
 } token;
 
-
+const char *tok_asstr(token tok);
 int isreserved(char *buf, size_t len);
 
 typedef struct lex_state {
@@ -34,6 +34,9 @@ typedef struct lex_state {
 	buffer text; // buffer used to build token string
 	int curr; // current character from input
 	token tok; // the complete last token from the input string
+
+	const char *errmsg; // Used to report errors during parsing
+	token errtok;
 } lex_state;
 
 lex_state lex_init(FILE *in);

@@ -4,77 +4,102 @@
 
 #include "token.h"
 
-void expr(lex_state *l) {
-	if (next_tok(l) != TK_NUMERAL) {
-		fprintf(stderr, "Expected numeric literal");
-		exit(1);
+#define error(l, str) do {\
+	(l)->errmsg = (str);\
+	(l)->errtok = (l)->tok;\
+	return 1;\
+} while (0)
+
+static int expect(lex_state *l, int tok_type) {
+	if (l->tok.type != tok_type) {
+		return 1;
+	}
+
+	next_tok(l);
+	return 0;
+}
+
+static int expr(lex_state *l) {
+	if (expect(l, TK_NUMERAL)) {
+		error(l, "Expected numeric literal");
 	}
 	printf("%s", l->tok.str);
 
-	if (next_tok(l) != ';') {
-		fprintf(stderr, "Expected ;");
-		exit(1);
-	}
-	printf(";\n");
+	return 0;
 }
 
-void statement(lex_state *l) {
-	if (next_tok(l) != TK_RET) {
-		fprintf(stderr, "Expected return\n");
-		exit(1);
+static int statement(lex_state *l) {
+	if (expect(l, TK_RET)) {
+		error(l, "Expected \"return\"");
 	}
 	printf("    return ");
 
-	expr(l);
+	if (expr(l)) {
+		return 1;
+	}
+
+	if (expect(l, ';')) {
+		error(l, "Expected ';'");
+	}
+	printf(";\n");
+
+	return 0;
 }
 
 // {...}
-void block(lex_state *l) {
-	if (next_tok(l) != '{') {
-		fprintf(stderr, "Expected right bracket\n");
-		exit(1);
+static int block(lex_state *l) {
+	if (expect(l, '{')) {
+		error(l, "Expected '{'");
 	}
 	printf("{\n");
 
-	statement(l);
+	if (statement(l)) {
+		return 1;
+	}
 
-	if (next_tok(l) != '}') {
-		fprintf(stderr, "Expected right bracket\n");
-		exit(1);
+	if (expect(l, '}')) {
+		error(l, "Expected '}'");
 	}
 	printf("}\n");
+
+	return 0;
 }
 
 // int ident() {...}
-void decl(lex_state *l) {
-	assert(l->tok.type == TK_INT);
+static int decl(lex_state *l) {
+	if (expect(l, TK_INT)) {
+		error(l, "Expected a declaration");
+	}
 	printf("int ");
-	if (next_tok(l) != TK_IDENT) {
-		fprintf(stderr, "Type specification must be followed by an identifier\n");
-		exit(1);
+
+	if (expect(l, TK_IDENT)) {
+		error(l, "Expected an identifier");
 	}
 
 	char *id = l->tok.str;
 	printf("%s", id);
 
-	if (!(next_tok(l) == '(' && next_tok(l) == ')')) {
-		fprintf(stderr, "Malformed declaration\n");
-		exit(1);
+	if (expect(l, '(') || expect(l, ')')) {
+		error(l, "Expected \"()\"");
 	}
-	printf("()");
+	printf("() ");
 
-	block(l);
+	if (block(l)) {
+		return 1;
+	}
+
+	return 0;
 }
 
-void parse(lex_state *l) {
-	switch (next_tok(l)) {
-		case TK_INT:
-			decl(l);
-			break;
-		default:
-			fprintf(stderr, "Unexpected token in source");
-			exit(1);
+int parse(lex_state *l) {
+	next_tok(l);
+	while (l->tok.type != TK_EOS) {
+		if (decl(l)) {
+			return 1;
+		}
 	}
+
+	return 0;
 }
 
 int main(int argc, char **argv) {
@@ -90,5 +115,9 @@ int main(int argc, char **argv) {
 	}
 
 	lex_state l = lex_init(in);
-	parse(&l);
+	if (parse(&l)) {
+		fprintf(stderr, "%d:%d: Found \"%s\"\n\t%s\n", 
+				l.errtok.line, l.errtok.col, tok_asstr(l.errtok), l.errmsg);
+		return 1;
+	}
 }

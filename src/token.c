@@ -12,6 +12,18 @@ const char * const TOKEN_STRINGS[] = {
 	"int", "return", 
 	"<ident>", "<numeral>", "<eos>"};
 
+const char *tok_asstr(token tok) {
+	static char buf[10];
+	if (tok.type < FIRST_RESERVED) {
+		snprintf(buf, sizeof(buf), "%c", tok.type);
+		return buf;
+	} else if (tok.type < TK_IDENT || tok.type == TK_EOS) {
+		return tokstr(tok.type);
+	} else {
+		return tok.str;
+	}
+}
+
 int isreserved(char *buf, size_t len) {
 	for (int i = 0; i < NUM_RESERVED; i++) {
 		if (strncmp(buf, TOKEN_STRINGS[i], len) == 0) {
@@ -85,7 +97,7 @@ int next_tok(lex_state *l) {
 				number(l);
 				emitlong(l, TK_NUMERAL);
 			case EOF:
-				return TK_EOS;
+				emit(l, TK_EOS);
 			default: // identifiers, keywords, operators, etc.
 				if (isalpha(l->curr) || l->curr == '_') {
 					keep(l);
